@@ -11,15 +11,17 @@ server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
 
-server.get('/', (req, res) => res.send('Hello from Express'));
+server.use(express.json());
 
-server.post('/api/user', (req,res) => 
-{
-        if(!req.body)  return res.status(404).json({errorMessage: "must send all required data: body undefined"});
+server.get('/', (req, res) => { console.log(req); res.send('Hello from Express')});
+
+server.post('/api/user', (req, res) => {
+    const userinfo = req.body;
+    if(!req.body)  return res.status(400).json({errorMessage:"must send all required data: body undefined"});
     const { name, bio } = req.body;
-    if(!name || !bio)  return res.status(404).json({errorMessage: "must send all required data"});
+    if(!name || !bio)  {return res.status(400).json({errorMessage: "must send all required data"})}
     db
-    .insert({name,bio})
+    .insert(userinfo)
     .then(response => {
         res.status(201).json(response);
       })
@@ -59,17 +61,17 @@ server.post('/api/user', (req,res) =>
 
   server.put('/api/user/:id', (req,res) =>
   {
-    console.log(req.body);
-    if(!req.body)  return res.status(404).json({errorMessage: "must send all required data: body undefined"});
+    if(!req.body)  return res.status(400).json({errorMessage: "must send all required data: body undefined"});
+    const { id } = req.params;
     const { name, bio } = req.body;
-    if(!name || !bio)  return res.status(404).json({errorMessage: "must send all required data"});
+    if(!name || !bio)  return res.status(400).json({errorMessage: "must send all required data"});
+    console.log(id);
     db
-    .update(res.params.id, res.body)
-    .then(res => {
-        if(res === 0) return res.status(404).json({errorMessage: "User does not exist"});
-
+    .update(id, req.body)
+    .then(response => {
+        if(response === 0) return res.status(404).json({errorMessage: "User does not exist"});
         db
-        .findById(res.params.id)
+        .findById(id)
         .then( user => 
         {
             if(!user || user.length == 0 || Object.keys(user).length === 0) return res.status(404).json({errorMessage: "User does not exist but may have been updated"});
