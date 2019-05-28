@@ -3,7 +3,7 @@ const express = require('express'); // built in node.js module to handle http tr
 const db = require('./data/db.js');
 const hostname = '127.0.0.1'; // the local computer where the server is running
 const port = 3000; // a port we'll use to watch for traffic
-
+const cors = require('cors');
 const server = express();
 
 server.listen(port, hostname, () => {
@@ -12,8 +12,14 @@ server.listen(port, hostname, () => {
 });
 
 server.use(express.json());
+server.use(cors());
 
-server.get('/', (req, res) => { console.log(req); res.send('Hello from Express')});
+var corsOptions = {
+  origin: hostname,
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
+server.get('/',  cors(corsOptions), (req, res) => { res.send('Hello from Express')});
 
 server.post('/api/user', (req, res) => {
     const userinfo = req.body;
@@ -65,7 +71,6 @@ server.post('/api/user', (req, res) => {
     const { id } = req.params;
     const { name, bio } = req.body;
     if(!name || !bio)  return res.status(400).json({errorMessage: "must send all required data"});
-    console.log(id);
     db
     .update(id, req.body)
     .then(response => {
